@@ -79,6 +79,8 @@ export async function POST(request) {
       `Callback processed | CheckoutRequestID: ${CheckoutRequestID} | Status: ${updatePayload.status} | Receipt: ${receiptNumber ?? 'N/A'}`
     );
 
+    // n8n polls /api/status directly — no forwarding needed here.
+
     // Safaricom expects this exact response — always return 200
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
   } catch (err) {

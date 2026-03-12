@@ -20,7 +20,7 @@ export async function GET(request) {
 
     const { data, error } = await supabase
       .from('payments')
-      .select('status, receipt_number, amount, phone, reference, result_desc, created_at, updated_at')
+      .select('status, receipt_number, amount, phone, reference, result_desc, agent_id, till_number, created_at, updated_at')
       .eq('checkout_request_id', checkoutRequestId)
       .single();
 
@@ -35,6 +35,8 @@ export async function GET(request) {
       success: true,
       status: data.status,              // 'pending' | 'completed' | 'failed'
       receipt_number: data.receipt_number ?? null,
+      agent_id: data.agent_id ?? null,
+      till_number: data.till_number ?? null,
       amount: data.amount,
       phone: data.phone,
       reference: data.reference,

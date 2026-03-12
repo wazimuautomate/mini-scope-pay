@@ -5,11 +5,15 @@ import { getMpesaAccessToken, sendStkPush, formatPhone, buildStkCredentials } fr
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { phone, amount, reference } = body;
+    const { phone, amount, reference, till_number, agent_id } = body;
 
     // ── Validate inputs ──────────────────────────────────────────────────────
     if (!phone) {
       return NextResponse.json({ success: false, message: 'Phone number is required' }, { status: 400 });
+    }
+
+    if (!till_number || !agent_id) {
+      return NextResponse.json({ error: 'till_number and agent_id are required' }, { status: 400 });
     }
 
     const parsedAmount = parseFloat(amount);
@@ -29,10 +33,7 @@ export async function POST(request) {
     const { shortcode, timestamp, password } = buildStkCredentials();
 
     const paymentMode = process.env.MPESA_PAYMENT_MODE || 'paybill'; // 'paybill' or 'till'
-    const partyB =
-      paymentMode === 'till'
-        ? process.env.MPESA_TILL_NUMBER
-        : process.env.MPESA_PAYBILL_NUMBER;
+    const partyB = paymentMode === 'till' ? till_number : process.env.MPESA_PAYBILL_NUMBER;
 
     if (!partyB) {
       return NextResponse.json(
@@ -54,7 +55,7 @@ export async function POST(request) {
     const stkData =
       paymentMode === 'till'
         ? {
-            BusinessShortCode: shortcode,
+            BusinessShortCode: till_number,
             Password: password,
             Timestamp: timestamp,
             TransactionType: 'CustomerBuyGoodsOnline',
@@ -67,7 +68,7 @@ export async function POST(request) {
             TransactionDesc: `Payment to Till ${partyB}`,
           }
         : {
-            BusinessShortCode: shortcode,
+            BusinessShortCode: till_number,
             Password: password,
             Timestamp: timestamp,
             TransactionType: 'CustomerPayBillOnline',
@@ -99,6 +100,8 @@ export async function POST(request) {
       phone: formattedPhone,
       amount: parsedAmount,
       reference: ref,
+      agent_id,
+      till_number,
       checkout_request_id: stkResponse.CheckoutRequestID,
       merchant_request_id: stkResponse.MerchantRequestID,
       status: 'pending',
