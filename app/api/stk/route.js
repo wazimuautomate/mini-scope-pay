@@ -12,8 +12,8 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Phone number is required' }, { status: 400 });
     }
 
-    if (!till_number || !agent_id) {
-      return NextResponse.json({ error: 'till_number and agent_id are required' }, { status: 400 });
+    if (!till_number) {
+      return NextResponse.json({ error: 'till_number is required' }, { status: 400 });
     }
 
     const parsedAmount = parseFloat(amount);
@@ -100,7 +100,7 @@ export async function POST(request) {
       phone: formattedPhone,
       amount: parsedAmount,
       reference: ref,
-      agent_id,
+      ...(agent_id ? { agent_id } : {}),
       till_number,
       checkout_request_id: stkResponse.CheckoutRequestID,
       merchant_request_id: stkResponse.MerchantRequestID,
