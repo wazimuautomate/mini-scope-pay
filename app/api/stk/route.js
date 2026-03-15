@@ -29,28 +29,6 @@ export async function POST(request) {
       );
     }
 
-    const normalizedTillNumber = String(till_number).trim();
-    const normalizedAgentId = String(agent_id).trim();
-
-    const { data: agent, error: agentError } = await supabase
-      .from('agents')
-      .select('*')
-      .eq('id', normalizedAgentId)
-      .eq('till_number', normalizedTillNumber)
-      .maybeSingle();
-
-    if (agentError) {
-      return NextResponse.json({ success: false, message: 'Merchant lookup failed' }, { status: 500 });
-    }
-
-    if (!agent) {
-      return NextResponse.json({ success: false, message: 'Merchant does not exist' }, { status: 404 });
-    }
-
-    if (agent.active === false || agent.enabled === false) {
-      return NextResponse.json({ success: false, message: 'Merchant is not active' }, { status: 403 });
-    }
-
     // ── Build STK payload ────────────────────────────────────────────────────
     const { shortcode, timestamp, password } = buildStkCredentials();
 
