@@ -12,10 +12,6 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: 'Phone number is required' }, { status: 400 });
     }
 
-    if (!till_number) {
-      return NextResponse.json({ error: 'till_number is required' }, { status: 400 });
-    }
-
     const parsedAmount = parseFloat(amount);
     if (!amount || parsedAmount <= 0) {
       return NextResponse.json({ success: false, message: 'Invalid amount' }, { status: 400 });
@@ -34,6 +30,10 @@ export async function POST(request) {
 
     const paymentMode = process.env.MPESA_PAYMENT_MODE || 'paybill'; // 'paybill' or 'till'
     const partyB = paymentMode === 'till' ? till_number : process.env.MPESA_PAYBILL_NUMBER;
+
+    if (paymentMode === 'till' && !till_number) {
+      return NextResponse.json({ error: 'till_number is required' }, { status: 400 });
+    }
 
     if (!partyB) {
       return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(request) {
     const stkData =
       paymentMode === 'till'
         ? {
-            BusinessShortCode: till_number,
+            BusinessShortCode: shortcode,
             Password: password,
             Timestamp: timestamp,
             TransactionType: 'CustomerBuyGoodsOnline',
@@ -68,7 +68,7 @@ export async function POST(request) {
             TransactionDesc: `Payment to Till ${partyB}`,
           }
         : {
-            BusinessShortCode: till_number,
+            BusinessShortCode: shortcode,
             Password: password,
             Timestamp: timestamp,
             TransactionType: 'CustomerPayBillOnline',
@@ -101,7 +101,7 @@ export async function POST(request) {
       amount: parsedAmount,
       reference: ref,
       ...(agent_id ? { agent_id } : {}),
-      till_number,
+      ...(till_number ? { till_number } : {}),
       checkout_request_id: stkResponse.CheckoutRequestID,
       merchant_request_id: stkResponse.MerchantRequestID,
       status: 'pending',
