@@ -9,13 +9,22 @@ import { supabase } from '@/lib/supabase';
  */
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+    let body = null;
+    if (rawBody) {
+      try {
+        body = JSON.parse(rawBody);
+      } catch (parseError) {
+        console.error('Invalid JSON body:', parseError);
+        return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+      }
+    }
 
     // ── Parse Safaricom callback body ────────────────────────────────────────
     const stkCallback = body?.Body?.stkCallback;
 
     if (!stkCallback) {
-      console.error('Invalid callback body:', JSON.stringify(body));
+      console.error('Invalid callback body:', body);
       return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
     }
 
@@ -26,6 +35,11 @@ export async function POST(request) {
       ResultDesc,
       CallbackMetadata,
     } = stkCallback;
+
+    if (!CheckoutRequestID) {
+      console.error('Missing CheckoutRequestID in callback body');
+      return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
+    }
 
     const isSuccess = ResultCode === 0;
 
